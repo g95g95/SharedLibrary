@@ -87,6 +87,9 @@ Indice principali e trigger aggiornano i timestamp e ottimizzano le ricerche tes
 - Non committare la Service Role Key di Supabase; usa le variabili d'ambiente.
 - Le password sono salvate con Bcrypt nel campo `password_hash`.
 
+## Risoluzione errori comuni
+- **Errore "Could not find the table `public.app_users` in the schema cache"**: l'istanza Supabase non ha ancora lo schema caricato. Apri la console di Supabase → **SQL** → incolla il contenuto di `database/schema.sql` → esegui. In alternativa, usa la CLI con `supabase db push --db-url "$SUPABASE_DB_URL"` puntando al database remoto. Dopo l'esecuzione, attendi qualche secondo che la cache di PostgREST si aggiorni e riprova il login/registrazione.
+
 ## Estensioni future
 - Integrazione API ISBN (Open Library/Google Books) per completare i metadati da barcode.
 - Notifiche email/push per scadenze dei prestiti e richieste.
