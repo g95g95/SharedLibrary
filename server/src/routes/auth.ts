@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { body, validationResult } from 'express-validator';
-import { supabase } from '../supabaseClient.js';
+import { supabase } from '../supabaseClient.ts';
 import { AuthPayload } from '../types.js';
 
 const router = express.Router();
