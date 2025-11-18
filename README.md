@@ -35,6 +35,23 @@ Funzionalità già disponibili:
 - Tabella libri con mailto precompilato per contattare il possessore.
 - Form di inserimento libro (richiede login) con autore/genere upsert su Supabase.
 
+### Test locali end-to-end
+Per provare l'app completa su `localhost`:
+1. **Database:** assicurati che l'istanza Supabase ("Local_Library_Project") abbia caricato `database/schema.sql`.
+2. **Backend:**
+   - `cd server`
+   - `cp .env.example .env` e compila `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`.
+   - `npm install`
+   - `npm run dev`
+3. **Frontend:**
+   - In un altro terminale `cd web`
+   - `cp .env.example .env` e imposta `VITE_API_BASE=http://localhost:4000`.
+   - `npm install`
+   - `npm run dev`
+4. Apri `http://localhost:5173` e prova: seleziona un villaggio, registra/login, inserisci un libro e fai ricerche.
+
+> Nota: se vuoi simulare il path di GitHub Pages in locale, imposta `VITE_BASE_PATH=/Local_Library_Project/` (o il nome del repo) nel `.env` del frontend.
+
 ## Deploy su GitHub Pages
 La UI React è statica e viene distribuita automaticamente dal workflow GitHub Actions `Deploy web to GitHub Pages` quando si effettua un push su `main` **o** `work`.
 
@@ -42,6 +59,18 @@ La UI React è statica e viene distribuita automaticamente dal workflow GitHub A
 2. Configura l'URL pubblico della tua API come variabile `VITE_API_BASE` nelle Repository Variables (Settings → Secrets and variables → Actions → Variables). Se non impostato, la build userà `http://localhost:4000` come fallback.
 3. Il base path è impostato automaticamente sul nome del repository (`/${repo}/`); non serve aggiornarlo manualmente dopo un rename, ma puoi sovrascriverlo via `VITE_BASE_PATH` se necessario.
 4. Il workflow builda `web/` con Vite, carica l'artefatto `web/dist` e lo pubblica su `gh-pages` usando `actions/deploy-pages` e `actions/configure-pages`.
+
+## Deploy del backend su Render
+Render ha un free tier per i servizi web hobby (risorse limitate e avvio a freddo), sufficiente per test e demo.
+
+1. Accedi a [Render](https://dashboard.render.com/) e scegli **New → Web Service** collegando questo repository.
+2. **Root directory:** `server`
+3. **Runtime:** Node.js 18+ (seleziona la versione supportata da Render più vicina).
+4. **Build command:** `npm install && npm run build`
+5. **Start command:** `npm run start`
+6. **Env Vars:** aggiungi `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PORT` (opzionale, Render fornisce `PORT` automaticamente), `NODE_ENV=production`.
+7. Deploya: Render installerà le dipendenze, compila TypeScript e avvierà `dist/server.js`. Copia l'URL pubblico del servizio e usalo come `VITE_API_BASE` nel frontend (Pages).
+8. (Opzionale) Abilita i log persistenti e health checks per monitorare uptime e errori.
 
 ## Modello dati di riferimento
 Lo schema seguente (PostgreSQL) è la base del backend. Le tabelle chiave sono:
