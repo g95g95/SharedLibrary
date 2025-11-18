@@ -7,41 +7,50 @@ Una piattaforma per creare una piccola biblioteca diffusa in comunità e borghi,
 - Offrire una UI accattivante, mobile-first, con flussi chiari per registrazione, inserimento libri e ricerca.
 - Integrare funzioni smart (riconoscimento ISBN da codice a barre, contatto rapido via email) per ridurre l'attrito.
 
+## Struttura del repository
+- `database/schema.sql`: script PostgreSQL pronto per Supabase (istanza "Local_Library_Project"), include tabelle per utenti applicativi (`app_users`) con password hash.
+- `server/`: backend Express + Supabase con endpoint REST per autenticazione, villaggi e libri.
+- `web/`: front-end React (Vite) con layout moderno per selezione comunità, login/registrazione, ricerca e inserimento libri.
+
+## Setup rapido
+### Backend (`server`)
+1. Copia `.env.example` in `.env` e imposta le variabili di Supabase (URL e Service Role Key).
+2. Installa le dipendenze: `npm install`.
+3. Avvia in sviluppo: `npm run dev` (porta di default 4000).
+
+Endpoint principali:
+- `POST /api/auth/register` e `POST /api/auth/login`
+- `GET /api/villages`
+- `GET /api/books` (filtri: `search`, `genreId`, `villageId`)
+- `POST /api/books` (richiede titolo, autore, genere; upsert automatici di autore/genere)
+
+### Frontend (`web`)
+1. Copia `.env.example` in `.env` e imposta `VITE_API_BASE` (es: `http://localhost:4000`).
+2. Installa le dipendenze: `npm install`.
+3. Avvia in sviluppo: `npm run dev` (porta di default 5173).
+
+Funzionalità già disponibili:
+- Selettore di comunità/villaggio (filtra le query libro).
+- Login/registrazione con username/password (tab nel pannello destro).
+- Tabella libri con mailto precompilato per contattare il possessore.
+- Form di inserimento libro (richiede login) con autore/genere upsert su Supabase.
+
 ## Modello dati di riferimento
 Lo schema seguente (PostgreSQL) è la base del backend. Le tabelle chiave sono:
 - `villages`: anagrafica delle comunità/borgate con coordinate opzionali.
 - `authors`, `genres`, `books`: catalogo bibliografico con riferimenti a autore/genre, stato del libro e campo `whohasit` per tracciare il possessore.
 - `conditions`: tabella di lookup con i possibili stati di conservazione.
-- `library_users`: utenti registrati del sistema (estendibile con credenziali applicative).
+- `library_users`: utenti registrati del sistema.
+- `app_users`: credenziali applicative con password hash (Bcrypt) per login/registrazione.
 - `loans`: storico dei prestiti con date di inizio/scadenza/restituzione.
 
 Indice principali e trigger aggiornano i timestamp e ottimizzano le ricerche testuali sul titolo.
 
-## Flusso utente previsto
-1. **Selezione comunità**: la homepage mostra la lista dei `villages` (ricerca GIN sul nome). La scelta filtra l'intero catalogo sui libri disponibili in quella comunità.
-2. **Registrazione / accesso**: form dedicato per creare o recuperare l'account (username/password da aggiungere a `library_users`). Dopo l'accesso sono disponibili le azioni di aggiunta/modifica libro.
-3. **Inserimento libro**:
-   - Form manuale con i campi di `books` (titolo, autore, genere, anno, editore, descrizione, condizione, possessore).
-   - Upload/scatto foto del codice a barre ISBN con parsing client-side; tramite API esterna si precompilano titolo, autore, genere e anno.
-4. **Catalogo e ricerca** (accessibile anche da utenti anonimi):
-   - Filtri per titolo (ricerca full-text), autore, genere, anno e comunità.
-   - Tabella/tiles con dettagli del libro, posizione geografica (dal `village` del possessore) e contatto dell'utente proprietario.
-   - Click sull'email apre il client di posta precompilato con il messaggio: "Ciao, {nome}, ho visto che hai a disposizione il libro {titolo} dell'anno {anno}. Mi farebbe piacere prenderlo in prestito, va bene?".
-5. **Prestiti**: da scheda libro un utente autenticato può avviare un prestito (`loans`) con data di scadenza e restituzione; aggiornamento dello stato libro e del possessore.
-
-## Architettura applicativa
-- **Frontend**: implementabile sia in Angular che in React; design moderno con palette chiara, card animate e layout responsive. Componenti chiave: selettore comunità, dashboard catalogo con filtri, form autenticazione, wizard di aggiunta libro con step per barcode.
-- **Backend/API**: servizio REST/GraphQL su PostgreSQL con autenticazione (JWT/sessioni). Endpoints per CRUD di libri, gestione prestiti, lookup di autori/generi, caricamento immagini barcode e aggancio a servizi ISBN.
-- **Integrazioni**: API ISBN (es. Open Library) per arricchire i metadati; geocoding per mostrare distanza tra utenti e biblioteca.
-
-## UX e stile
-- Layout split: a sinistra selezione comunità e filtri, a destra catalogo con infinite scroll.
-- CTA evidenti per "Aggiungi libro" (solo autenticati) e "Contatta" (mailto precompilato).
-- Microinterazioni (hover, skeleton loading) per rendere piacevole l'attesa.
+## Note di sicurezza
+- Non committare la Service Role Key di Supabase; usa le variabili d'ambiente.
+- Le password sono salvate con Bcrypt nel campo `password_hash`.
 
 ## Estensioni future
-- Notifiche email/push per scadenze dei prestiti.
-- Gamification: badge per chi presta di più o mantiene i libri in ottime condizioni.
-- Dashboard amministrativa per moderazione e statistiche per comunità.
-
-Questo documento serve come base di lavoro per implementare la web app e il relativo backend seguendo lo schema fornito.
+- Integrazione API ISBN (Open Library/Google Books) per completare i metadati da barcode.
+- Notifiche email/push per scadenze dei prestiti e richieste.
+- Gamification e dashboard amministrativa.
