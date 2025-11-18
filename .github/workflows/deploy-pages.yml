@@ -2,7 +2,7 @@ name: Deploy web to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "work"]
   workflow_dispatch:
 
 permissions:
@@ -24,6 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -34,7 +37,7 @@ jobs:
 
       - name: Build
         env:
-          VITE_BASE_PATH: /Local_Library_Project/
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
           VITE_API_BASE: ${{ vars.VITE_API_BASE }}
         run: npm run build
 
