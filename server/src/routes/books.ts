@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { supabase } from '../supabaseClient.js';
-import { BookPayload } from '../types.js';
+import { supabase } from '../supabaseClient.ts';
+import { BookPayload } from '../types.ts';
 
 const router = express.Router();
 

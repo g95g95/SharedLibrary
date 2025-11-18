@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserBarcodeReader } from '@zxing/browser';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 import { fetchJson } from '../api';
 
 interface Props {
@@ -75,7 +75,7 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
     setBarcodeStatus('Cerco di leggere il codice a barre...');
     setError('');
 
-    const reader = new BrowserBarcodeReader();
+    const reader = new BrowserMultiFormatReader();
     const objectUrl = URL.createObjectURL(barcodeFile);
 
     try {
