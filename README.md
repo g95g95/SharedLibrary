@@ -25,7 +25,7 @@ Endpoint principali:
 - `POST /api/books` (richiede titolo, autore, genere; upsert automatici di autore/genere)
 
 ### Frontend (`web`)
-1. Copia `.env.example` in `.env` e imposta `VITE_API_BASE` (es: `http://localhost:4000`).
+1. Copia `.env.example` in `.env` e imposta `VITE_API_BASE` (es: `http://localhost:4000`). Se vuoi testare il path di GitHub Pages in locale, imposta anche `VITE_BASE_PATH` (es: `/Local_Library_Project/`).
 2. Installa le dipendenze: `npm install`.
 3. Avvia in sviluppo: `npm run dev` (porta di default 5173).
 
@@ -34,6 +34,14 @@ Funzionalità già disponibili:
 - Login/registrazione con username/password (tab nel pannello destro).
 - Tabella libri con mailto precompilato per contattare il possessore.
 - Form di inserimento libro (richiede login) con autore/genere upsert su Supabase.
+
+## Deploy su GitHub Pages
+La UI React è statica e viene distribuita automaticamente dal workflow GitHub Actions `Deploy web to GitHub Pages` quando si effettua un push su `main`.
+
+1. Attiva GitHub Pages dalle impostazioni del repository usando il branch `gh-pages` gestito dal workflow.
+2. Configura l'URL pubblico della tua API come variabile `VITE_API_BASE` nelle Repository Variables (Settings → Secrets and variables → Actions → Variables). Se non impostato, la build userà `http://localhost:4000` come fallback.
+3. Se il repository viene rinominato, aggiorna la variabile `VITE_BASE_PATH` nel workflow o nel file `.env` per riflettere il nuovo sottopath di GitHub Pages (formato: `/nome-repo/`).
+4. Il workflow builda `web/` con Vite, carica l'artefatto `web/dist` e lo pubblica su `gh-pages` usando `actions/deploy-pages`.
 
 ## Modello dati di riferimento
 Lo schema seguente (PostgreSQL) è la base del backend. Le tabelle chiave sono:
