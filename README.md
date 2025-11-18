@@ -16,7 +16,7 @@ Una piattaforma per creare una piccola biblioteca diffusa in comunità e borghi,
 ### Backend (`server`)
 1. Copia `.env.example` in `.env` e imposta le variabili di Supabase (URL e Service Role Key).
 2. Installa le dipendenze: `npm install`.
-3. Avvia in sviluppo: `npm run dev` (porta di default 4000).
+3. Avvia in sviluppo: `npm run dev` (porta di default 4000). Se vedi l'errore `ts-node-dev: no script to run provided`, aggiorna le dipendenze (serve `ts-node-dev` >= 2.x) e assicurati di lanciare il comando **dentro** la cartella `server`: lo script ora usa `-- ./src/server.ts` per passare in modo esplicito il file da eseguire.
 
 Endpoint principali:
 - `POST /api/auth/register` e `POST /api/auth/login`
