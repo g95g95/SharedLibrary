@@ -35,6 +35,7 @@ router.post(
     body('villageId').optional().isInt(),
     body('conditionId').optional().isInt(),
     body('ownerId').optional().isInt(),
+    body('language').optional().isString(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -54,6 +55,7 @@ router.post(
         publication_year: payload.publicationYear,
         publisher: payload.publisher,
         description: payload.description,
+        language: payload.language || 'italiano',
         condition_id: payload.conditionId,
         village_id: payload.villageId,
         whohasit: payload.ownerId ?? -1,
@@ -63,7 +65,7 @@ router.post(
         .from('books')
         .insert(insertPayload)
         .select(
-          'id, title, publication_year, publisher, description, condition_id, village_id, author:authors(id, name), genre:genres(id, name)'
+          'id, title, publication_year, publisher, description, language, condition_id, village_id, author:authors(id, name), genre:genres(id, name)'
         )
         .single();
 
@@ -83,7 +85,7 @@ router.get('/', async (req, res) => {
   let query = supabase
     .from('books')
     .select(
-      'id, title, publication_year, publisher, description, whohasit, village_id, condition_id, author:authors(id, name), genre:genres(id, name)'
+      'id, title, publication_year, publisher, description, language, whohasit, village_id, condition_id, author:authors(id, name), genre:genres(id, name)'
     )
     .order('title');
 

@@ -15,4 +15,5 @@ export interface BookPayload {
   conditionId?: number;
   villageId?: number;
   ownerId?: number;
+  language?: string;
 }

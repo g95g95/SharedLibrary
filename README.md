@@ -88,7 +88,10 @@ Indice principali e trigger aggiornano i timestamp e ottimizzano le ricerche tes
 - Le password sono salvate con Bcrypt nel campo `password_hash`.
 
 ## Risoluzione errori comuni
-- **Errore "Could not find the table `public.app_users` in the schema cache"**: l'istanza Supabase non ha ancora lo schema caricato. Apri la console di Supabase → **SQL** → incolla il contenuto di `database/schema.sql` → esegui. In alternativa, usa la CLI con `supabase db push --db-url "$SUPABASE_DB_URL"` puntando al database remoto. Dopo l'esecuzione, attendi qualche secondo che la cache di PostgREST si aggiorni e riprova il login/registrazione.
+- **Errore "Could not find the table `public.app_users` in the schema cache"**: capita quando il database Supabase è vuoto o non ha caricato `database/schema.sql`. PostgREST legge una cache dello schema: finché la tabella non esiste, l'API rifiuta le chiamate di login/registrazione. Per risolvere:
+  1. Apri la console di Supabase → **SQL** → incolla e lancia `database/schema.sql` (oppure `supabase db push --db-url "$SUPABASE_DB_URL"`).
+  2. Attendi qualche secondo che la cache si aggiorni (oppure riavvia il servizio PostgREST da **Database → Rest** se necessario).
+  3. Riprova il login/registrazione: la tabella `app_users` sarà presente e l'API tornerà a rispondere.
 
 ## Estensioni future
 - Integrazione API ISBN (Open Library/Google Books) per completare i metadati da barcode.

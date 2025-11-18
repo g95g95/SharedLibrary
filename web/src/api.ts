@@ -22,6 +22,7 @@ export interface ApiBook {
   publication_year?: number;
   publisher?: string;
   description?: string;
+  language?: string;
   whohasit?: number;
   author?: { id: number; name: string };
   genre?: { id: number; name: string };

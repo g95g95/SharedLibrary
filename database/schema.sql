@@ -21,6 +21,7 @@ create table if not exists books (
   publication_year int,
   publisher text,
   description text,
+  language text default 'italiano',
   whohasit int default -1,
   village_id bigint references villages(id) on delete set null,
   condition_id smallint references conditions(id) on delete set null

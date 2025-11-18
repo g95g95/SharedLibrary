@@ -12,6 +12,7 @@ function BookTable({ books }: Props) {
         <span>Autore</span>
         <span>Genere</span>
         <span>Anno</span>
+        <span>Lingua</span>
         <span>Contatto</span>
       </div>
       {books.map((book) => {
@@ -29,6 +30,7 @@ function BookTable({ books }: Props) {
             <span>{book.author?.name || 'N/D'}</span>
             <span>{book.genre?.name || 'N/D'}</span>
             <span>{book.publication_year || '—'}</span>
+            <span>{book.language || 'italiano'}</span>
             <a href={mailLink} className="pill">
               Contatta
             </a>

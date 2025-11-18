@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BrowserBarcodeReader } from '@zxing/browser';
 import { fetchJson } from '../api';
 
 interface Props {
@@ -15,8 +16,81 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
   const [publisher, setPublisher] = useState('');
   const [description, setDescription] = useState('');
   const [conditionId, setConditionId] = useState('');
+  const [language, setLanguage] = useState('italiano');
+  const [barcodeFile, setBarcodeFile] = useState<File | null>(null);
+  const [barcodeStatus, setBarcodeStatus] = useState('');
+  const [detectedIsbn, setDetectedIsbn] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  function parseYear(raw?: string) {
+    if (!raw) return '';
+    const match = raw.match(/\d{4}/);
+    return match ? match[0] : '';
+  }
+
+  async function populateFromIsbn(isbn: string) {
+    const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+    if (!cleanIsbn) return;
+
+    try {
+      const response = await fetch(`https://openlibrary.org/isbn/${cleanIsbn}.json`);
+      if (!response.ok) {
+        setBarcodeStatus('Barcode letto, ma non sono riuscito a recuperare i dettagli dal catalogo.');
+        return;
+      }
+
+      const bookData = await response.json();
+      if (bookData.title && !title) setTitle(bookData.title);
+      if (bookData.publish_date && !publicationYear) setPublicationYear(parseYear(bookData.publish_date));
+      if (bookData.publishers?.length && !publisher) setPublisher(bookData.publishers[0]);
+
+      if (bookData.authors?.length && !authorName) {
+        const authorKey = bookData.authors[0]?.key;
+        if (authorKey) {
+          const authorRes = await fetch(`https://openlibrary.org${authorKey}.json`).catch(() => null);
+          const authorJson = await authorRes?.json().catch(() => null);
+          if (authorJson?.name) setAuthorName(authorJson.name);
+        }
+      }
+
+      if (bookData.languages?.length && !language) {
+        const langKey = bookData.languages[0]?.key as string;
+        if (langKey?.toLowerCase().includes('ita')) setLanguage('italiano');
+        else if (langKey?.toLowerCase().includes('eng')) setLanguage('inglese');
+      }
+
+      setBarcodeStatus('Dati libro aggiornati dal codice a barre.');
+    } catch (err: any) {
+      setBarcodeStatus(`Barcode letto (${cleanIsbn}), ma non sono riuscito a completare l\'autocompilazione: ${err.message}`);
+    }
+  }
+
+  async function recognizeBarcode() {
+    if (!barcodeFile) {
+      setBarcodeStatus('Seleziona o scatta prima una foto del codice a barre.');
+      return;
+    }
+
+    setBarcodeStatus('Cerco di leggere il codice a barre...');
+    setError('');
+
+    const reader = new BrowserBarcodeReader();
+    const objectUrl = URL.createObjectURL(barcodeFile);
+
+    try {
+      const result = await reader.decodeFromImageUrl(objectUrl);
+      const text = result.getText();
+      setDetectedIsbn(text);
+      setBarcodeStatus(`Codice letto: ${text}. Sto recuperando i dettagli...`);
+      await populateFromIsbn(text);
+    } catch (err: any) {
+      setBarcodeStatus('Non sono riuscito a leggere il codice a barre. Prova con una foto più nitida.');
+      setError(err?.message || 'Errore durante la lettura del codice.');
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
 
   async function submit() {
     setError('');
@@ -32,6 +106,7 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
           publisher,
           description,
           conditionId: conditionId ? Number(conditionId) : undefined,
+          language,
           villageId: selectedVillage,
         }),
       });
@@ -43,6 +118,10 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
       setPublisher('');
       setDescription('');
       setConditionId('');
+      setLanguage('italiano');
+      setBarcodeFile(null);
+      setBarcodeStatus('');
+      setDetectedIsbn('');
       onCreated();
     } catch (err: any) {
       setError(err.message);
@@ -65,6 +144,12 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
         />
         <input placeholder="Editore" value={publisher} onChange={(e) => setPublisher(e.target.value)} disabled={disabled} />
       </div>
+      <input
+        placeholder="Lingua (default italiano)"
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
+        disabled={disabled}
+      />
       <textarea
         placeholder="Descrizione"
         value={description}
@@ -77,6 +162,21 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
         onChange={(e) => setConditionId(e.target.value)}
         disabled={disabled}
       />
+      <div className="card subtle">
+        <p className="muted">Acquisisci dal codice a barre (ISBN)</p>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={(e) => setBarcodeFile(e.target.files?.[0] || null)}
+          disabled={disabled}
+        />
+        <button onClick={recognizeBarcode} disabled={disabled || !barcodeFile}>
+          Leggi codice a barre e autocompila
+        </button>
+        {barcodeStatus && <p className="muted">{barcodeStatus}</p>}
+        {detectedIsbn && <p className="muted">ISBN rilevato: {detectedIsbn}</p>}
+      </div>
       {error && <p className="error">{error}</p>}
       {success && <p className="success">{success}</p>}
       <button onClick={submit} disabled={disabled}>
