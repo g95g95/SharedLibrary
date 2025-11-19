@@ -3,6 +3,7 @@ export interface AuthPayload {
   password: string;
   email?: string;
   fullName?: string;
+  village?: number;
 }
 
 export interface BookPayload {

@@ -59,14 +59,14 @@ router.post(
         language: payload.language || 'italiano',
         condition_id: payload.conditionId,
         village_id: payload.villageId,
-        whohasit: payload.ownerId ?? -1,
+        owner_id: payload.ownerId,
       };
 
       const { data, error } = await supabase
         .from('books')
         .insert(insertPayload)
         .select(
-          'id, title, publication_year, publisher, description, language, condition_id, village_id, author:authors(id, name), genre:genres(id, name)'
+          'id, title, publication_year, publisher, description, language, owner_id, condition_id, village_id, author:authors(id, name), genre:genres(id, name)'
         )
         .single();
 
@@ -86,7 +86,7 @@ router.get('/', async (req: Request, res: Response) => {
   let query = supabase
     .from('books')
     .select(
-      'id, title, publication_year, publisher, description, language, whohasit, village_id, condition_id, author:authors(id, name), genre:genres(id, name)'
+      'id, title, publication_year, publisher, description, language, owner_id, village_id, condition_id, author:authors(id, name), genre:genres(id, name)'
     )
     .order('title');
 

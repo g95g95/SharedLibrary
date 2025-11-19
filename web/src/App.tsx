@@ -23,6 +23,13 @@ function App() {
     fetchJson(`/api/books?${params.toString()}`).then((res) => setBooks(res.books || []));
   }, [search, selectedVillage]);
 
+  function handleAuthenticated(nextUser: ApiUser | null) {
+    setUser(nextUser);
+    if (nextUser?.village) {
+      setSelectedVillage(nextUser.village);
+    }
+  }
+
   return (
     <div className="app-shell">
       <header className="hero">
@@ -43,7 +50,7 @@ function App() {
             />
           </div>
         </div>
-        <AuthPanel onAuthenticated={setUser} currentUser={user} />
+        <AuthPanel onAuthenticated={handleAuthenticated} currentUser={user} />
       </header>
 
       <main className="grid">
@@ -66,7 +73,12 @@ function App() {
             </div>
             <span className="pill muted">Richiede login</span>
           </div>
-          <BookForm disabled={!user} selectedVillage={selectedVillage} onCreated={() => setSearch('')} />
+          <BookForm
+            disabled={!user}
+            currentUser={user}
+            selectedVillage={selectedVillage}
+            onCreated={() => setSearch('')}
+          />
         </section>
       </main>
     </div>
