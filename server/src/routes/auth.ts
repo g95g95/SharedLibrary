@@ -16,6 +16,7 @@ router.post(
     body('password').isString().isLength({ min: 8 }),
     body('email').optional().isEmail(),
     body('fullName').optional().isString(),
+    body('village').optional().isInt(),
   ],
     async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -33,8 +34,9 @@ router.post(
         password_hash: passwordHash,
         email: payload.email,
         full_name: payload.fullName,
+        village: payload.village,
       })
-      .select('id, username, email, full_name')
+      .select('id, username, email, full_name, village')
       .single();
 
     if (error) {
@@ -57,7 +59,7 @@ router.post(
     const payload = req.body as AuthPayload;
     const { data, error } = await supabase
       .from('app_users')
-      .select('id, username, email, password_hash, full_name')
+      .select('id, username, email, password_hash, full_name, village')
       .eq('username', payload.username)
       .single();
 

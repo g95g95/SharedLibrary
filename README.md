@@ -75,10 +75,10 @@ Render ha un free tier per i servizi web hobby (risorse limitate e avvio a fredd
 ## Modello dati di riferimento
 Lo schema seguente (PostgreSQL) è la base del backend. Le tabelle chiave sono:
 - `villages`: anagrafica delle comunità/borgate con coordinate opzionali.
-- `authors`, `genres`, `books`: catalogo bibliografico con riferimenti a autore/genre, stato del libro e campo `whohasit` per tracciare il possessore.
+- `authors`, `genres`, `books`: catalogo bibliografico con riferimenti a autore/genre, stato del libro e campo `owner_id` collegato agli utenti applicativi per tracciare il proprietario.
 - `conditions`: tabella di lookup con i possibili stati di conservazione.
 - `library_users`: utenti registrati del sistema.
-- `app_users`: credenziali applicative con password hash (Bcrypt) per login/registrazione.
+- `app_users`: credenziali applicative con password hash (Bcrypt) per login/registrazione e villaggio predefinito associato.
 - `loans`: storico dei prestiti con date di inizio/scadenza/restituzione.
 
 Indice principali e trigger aggiornano i timestamp e ottimizzano le ricerche testuali sul titolo.

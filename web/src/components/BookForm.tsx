@@ -1,14 +1,46 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
-import { fetchJson } from '../api';
+import { ApiUser, fetchJson } from '../api';
+
+type BarcodeDetectorWindow = Window & { BarcodeDetector?: typeof BarcodeDetector };
 
 interface Props {
   disabled: boolean;
   selectedVillage?: number;
+  currentUser: ApiUser | null;
   onCreated: () => void;
 }
 
-function BookForm({ disabled, selectedVillage, onCreated }: Props) {
+async function detectWithNativeBarcodeDetector(file: File) {
+  if (typeof window === 'undefined') return null;
+  const detectorCtor = (window as BarcodeDetectorWindow).BarcodeDetector;
+  if (!detectorCtor || typeof createImageBitmap !== 'function') return null;
+
+  try {
+    const detector = new detectorCtor({ formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a'] });
+    const bitmap = await createImageBitmap(file);
+    const results = await detector.detect(bitmap);
+    bitmap.close?.();
+    return results[0]?.rawValue || null;
+  } catch (err) {
+    console.warn('Native barcode detection failed', err);
+    return null;
+  }
+}
+
+async function decodeWithZxing(file: File) {
+  const reader = new BrowserMultiFormatReader();
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const result = await reader.decodeFromImageUrl(objectUrl);
+    return result.getText();
+  } finally {
+    reader.reset();
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function BookForm({ disabled, selectedVillage, currentUser, onCreated }: Props) {
   const [title, setTitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [genreName, setGenreName] = useState('');
@@ -17,11 +49,24 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
   const [description, setDescription] = useState('');
   const [conditionId, setConditionId] = useState('');
   const [language, setLanguage] = useState('italiano');
+  const [villageIdInput, setVillageIdInput] = useState(selectedVillage ? String(selectedVillage) : '');
   const [barcodeFile, setBarcodeFile] = useState<File | null>(null);
   const [barcodeStatus, setBarcodeStatus] = useState('');
   const [detectedIsbn, setDetectedIsbn] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    if (selectedVillage) {
+      setVillageIdInput(String(selectedVillage));
+      return;
+    }
+    if (currentUser?.village) {
+      setVillageIdInput(String(currentUser.village));
+      return;
+    }
+    setVillageIdInput('');
+  }, [selectedVillage, currentUser?.village]);
 
   function parseYear(raw?: string) {
     if (!raw) return '';
@@ -75,20 +120,19 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
     setBarcodeStatus('Cerco di leggere il codice a barre...');
     setError('');
 
-    const reader = new BrowserMultiFormatReader();
-    const objectUrl = URL.createObjectURL(barcodeFile);
-
     try {
-      const result = await reader.decodeFromImageUrl(objectUrl);
-      const text = result.getText();
+      const text =
+        (await detectWithNativeBarcodeDetector(barcodeFile)) ?? (await decodeWithZxing(barcodeFile));
+      if (!text) {
+        setBarcodeStatus('Non sono riuscito a leggere il codice a barre. Prova con una foto più nitida.');
+        return;
+      }
       setDetectedIsbn(text);
       setBarcodeStatus(`Codice letto: ${text}. Sto recuperando i dettagli...`);
       await populateFromIsbn(text);
     } catch (err: any) {
       setBarcodeStatus('Non sono riuscito a leggere il codice a barre. Prova con una foto più nitida.');
       setError(err?.message || 'Errore durante la lettura del codice.');
-    } finally {
-      URL.revokeObjectURL(objectUrl);
     }
   }
 
@@ -107,7 +151,8 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
           description,
           conditionId: conditionId ? Number(conditionId) : undefined,
           language,
-          villageId: selectedVillage,
+          villageId: villageIdInput ? Number(villageIdInput) : selectedVillage,
+          ownerId: currentUser?.id,
         }),
       });
       setSuccess('Libro inserito!');
@@ -119,6 +164,7 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
       setDescription('');
       setConditionId('');
       setLanguage('italiano');
+      setVillageIdInput(selectedVillage ? String(selectedVillage) : currentUser?.village ? String(currentUser.village) : '');
       setBarcodeFile(null);
       setBarcodeStatus('');
       setDetectedIsbn('');
@@ -150,6 +196,12 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
         onChange={(e) => setLanguage(e.target.value)}
         disabled={disabled}
       />
+      <input
+        placeholder="ID villaggio"
+        value={villageIdInput}
+        onChange={(e) => setVillageIdInput(e.target.value)}
+        disabled={disabled}
+      />
       <textarea
         placeholder="Descrizione"
         value={description}
@@ -169,9 +221,8 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
           accept="image/*"
           capture="environment"
           onChange={(e) => setBarcodeFile(e.target.files?.[0] || null)}
-          disabled={disabled}
         />
-        <button onClick={recognizeBarcode} disabled={disabled || !barcodeFile}>
+        <button onClick={recognizeBarcode} disabled={!barcodeFile}>
           Leggi codice a barre e autocompila
         </button>
         {barcodeStatus && <p className="muted">{barcodeStatus}</p>}

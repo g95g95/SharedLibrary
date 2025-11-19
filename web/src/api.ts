@@ -5,6 +5,7 @@ export interface ApiUser {
   username: string;
   email?: string;
   full_name?: string;
+  village?: number;
 }
 
 export interface ApiVillage {
@@ -23,7 +24,7 @@ export interface ApiBook {
   publisher?: string;
   description?: string;
   language?: string;
-  whohasit?: number;
+  owner_id?: number;
   author?: { id: number; name: string };
   genre?: { id: number; name: string };
   village_id?: number;

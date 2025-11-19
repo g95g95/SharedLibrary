@@ -22,7 +22,7 @@ create table if not exists books (
   publisher text,
   description text,
   language text default 'italiano',
-  whohasit int default -1,
+  owner_id bigint references app_users(id) on delete set null,
   village_id bigint references villages(id) on delete set null,
   condition_id smallint references conditions(id) on delete set null
 );
@@ -53,6 +53,7 @@ create table if not exists app_users (
   password_hash text not null,
   email text unique,
   full_name text,
+  village bigint references villages(id) on delete set null,
   created_at timestamptz default now()
 );
 
