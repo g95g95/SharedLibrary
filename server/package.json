@@ -2,10 +2,9 @@
   "name": "local-library-server",
   "version": "1.0.0",
   "description": "API backend for Local Library Project powered by Supabase",
-  "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch ./src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only -- ./src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js"
   },
@@ -23,7 +22,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.17.6",
-    "tsx": "^4.19.2",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.3"
   }
 }

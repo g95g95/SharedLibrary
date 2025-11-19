@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { env } from './env.js';
-import authRoutes from './routes/auth.js';
-import bookRoutes from './routes/books.js';
-import villageRoutes from './routes/villages.js';
+import { env } from './env';
+import authRoutes from './routes/auth';
+import bookRoutes from './routes/books';
+import villageRoutes from './routes/villages';
 
 const app = express();
 app.use(helmet());

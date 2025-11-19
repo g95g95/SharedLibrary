@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { BrowserBarcodeReader } from '@zxing/browser';
+import { useState } from 'react';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 import { fetchJson } from '../api';
 
 interface Props {
@@ -20,20 +20,8 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
   const [barcodeFile, setBarcodeFile] = useState<File | null>(null);
   const [barcodeStatus, setBarcodeStatus] = useState('');
   const [detectedIsbn, setDetectedIsbn] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const readerRef = useRef<BrowserBarcodeReader | null>(null);
-  const stopControlsRef = useRef<(() => void) | null>(null);
-
-  useEffect(() => {
-    readerRef.current = new BrowserBarcodeReader();
-    return () => {
-      stopLiveScan();
-    };
-  }, []);
 
   function parseYear(raw?: string) {
     if (!raw) return '';
@@ -79,7 +67,6 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
   }
 
   async function recognizeBarcode() {
-    if (!readerRef.current) return;
     if (!barcodeFile) {
       setBarcodeStatus('Seleziona o scatta prima una foto del codice a barre.');
       return;
@@ -88,64 +75,21 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
     setBarcodeStatus('Cerco di leggere il codice a barre...');
     setError('');
 
+    const reader = new BrowserMultiFormatReader();
     const objectUrl = URL.createObjectURL(barcodeFile);
 
     try {
-      const result = await readerRef.current.decodeFromImageUrl(objectUrl);
-      await handleDecodedText(result.getText());
+      const result = await reader.decodeFromImageUrl(objectUrl);
+      const text = result.getText();
+      setDetectedIsbn(text);
+      setBarcodeStatus(`Codice letto: ${text}. Sto recuperando i dettagli...`);
+      await populateFromIsbn(text);
     } catch (err: any) {
       setBarcodeStatus('Non sono riuscito a leggere il codice a barre. Prova con una foto più nitida.');
       setError(err?.message || 'Errore durante la lettura del codice.');
     } finally {
       URL.revokeObjectURL(objectUrl);
     }
-  }
-
-  async function handleDecodedText(text: string) {
-    if (!text) return;
-    setDetectedIsbn(text);
-    setBarcodeStatus(`Codice letto: ${text}. Sto recuperando i dettagli...`);
-    await populateFromIsbn(text);
-  }
-
-  async function startLiveScan() {
-    if (!readerRef.current || !videoRef.current) return;
-    setError('');
-    setBarcodeStatus('Avvio scanner...');
-    setIsScanning(true);
-
-    try {
-      const controls = await readerRef.current.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
-        if (result) {
-          stopControlsRef.current?.();
-          setIsScanning(false);
-          handleDecodedText(result.getText());
-        } else if (err) {
-          setBarcodeStatus('Inquadra il codice a barre: ' + err.message);
-        }
-      });
-
-      stopControlsRef.current = () => {
-        controls.stop();
-        if (videoRef.current?.srcObject) {
-          (videoRef.current.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
-          videoRef.current.srcObject = null;
-        }
-      };
-
-      setBarcodeStatus('Scanner attivo: inquadra il codice a barre.');
-    } catch (err: any) {
-      setIsScanning(false);
-      setBarcodeStatus('Non sono riuscito ad attivare la fotocamera.');
-      setError(err?.message || 'Errore durante l\'avvio dello scanner.');
-      stopLiveScan();
-    }
-  }
-
-  function stopLiveScan() {
-    stopControlsRef.current?.();
-    stopControlsRef.current = null;
-    setIsScanning(false);
   }
 
   async function submit() {
@@ -225,16 +169,11 @@ function BookForm({ disabled, selectedVillage, onCreated }: Props) {
           accept="image/*"
           capture="environment"
           onChange={(e) => setBarcodeFile(e.target.files?.[0] || null)}
+          disabled={disabled}
         />
-        <button onClick={recognizeBarcode} disabled={!barcodeFile}>
+        <button onClick={recognizeBarcode} disabled={disabled || !barcodeFile}>
           Leggi codice a barre e autocompila
         </button>
-        <div className="scanner-row">
-          <button onClick={isScanning ? stopLiveScan : startLiveScan}>
-            {isScanning ? 'Ferma scanner' : 'Scansiona con fotocamera'}
-          </button>
-          <video ref={videoRef} className="preview" autoPlay muted playsInline />
-        </div>
         {barcodeStatus && <p className="muted">{barcodeStatus}</p>}
         {detectedIsbn && <p className="muted">ISBN rilevato: {detectedIsbn}</p>}
       </div>

@@ -227,22 +227,6 @@ button.ghost {
   color: #15803d;
 }
 
-.scanner-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-.preview {
-  width: 140px;
-  height: 90px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #f3f4f6;
-}
-
 .search {
   flex: 1;
 }
