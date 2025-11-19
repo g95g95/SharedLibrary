@@ -1,8 +1,11 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { body, validationResult } from 'express-validator';
-import { supabase } from '../supabaseClient.ts';
+import { supabase } from '../supabaseClient';
 import { AuthPayload } from '../types.js';
+import { Router, Request, Response } from 'express';
+
+
 
 const router = express.Router();
 
@@ -14,7 +17,7 @@ router.post(
     body('email').optional().isEmail(),
     body('fullName').optional().isString(),
   ],
-  async (req, res) => {
+    async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -45,7 +48,7 @@ router.post(
 router.post(
   '/login',
   [body('username').isString(), body('password').isString()],
-  async (req, res) => {
+    async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });

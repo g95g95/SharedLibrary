@@ -1,7 +1,8 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { supabase } from '../supabaseClient.ts';
-import { BookPayload } from '../types.ts';
+import { supabase } from '../supabaseClient';
+import { BookPayload } from '../types';
+import { Router, Request, Response } from 'express';
 
 const router = express.Router();
 
@@ -37,7 +38,7 @@ router.post(
     body('ownerId').optional().isInt(),
     body('language').optional().isString(),
   ],
-  async (req, res) => {
+    async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -80,7 +81,7 @@ router.post(
   }
 );
 
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   const { search, genreId, villageId } = req.query;
   let query = supabase
     .from('books')
